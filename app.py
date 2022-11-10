@@ -175,17 +175,15 @@ def index():
 def add_course():
     if request.method == 'POST':
         course_name=request.form['course_name']
-        no_of_lectures = request.form['lecturesno']
         teachers_email=request.form['teachersemail']
         students_email =request.form['studentsemail']
-        print(course_name, no_of_lectures, teachers_email, students_email)
+        print(course_name, teachers_email, students_email)
 
         # check teachers email adddress then save 
         # if email address not present in the database then show error
 
         course = Course(
                 course_name=course_name,
-                total_lectures= no_of_lectures,
                 teacher_email=teachers_email,
                 students_email=students_email,
             )
@@ -211,7 +209,7 @@ def login_student():
             session['uname'] = uname
             session['user_type'] = "student"
             session['email'] = email
-            session['roll_no'] = student.rollno
+            session['roll_no'] = student.student_id
             session['name'] = student.name      
             flash('You are now logged in', 'success')
             return redirect(url_for('student'))
@@ -284,14 +282,14 @@ def student():
 # def view_attendance():
 #     course = request.args.get('course')
 
-#     unique_courses = Attendance.query.filter_by(rollno=session['roll_no']).all()
+#     unique_courses = Attendance.query.filter_by(student_id=session['roll_no']).all()
 #     print(unique_courses[0].course_id)
 #     if course is None:
 #         course = 1
 #     # get unique lecture numbers marked by current faculty
 #     # get the attendance for the specified lecture
 #     attendance = Attendance.query.filter_by(
-#         rollno=session['roll_no'], course_id=course).all()
+#         student_id=session['roll_no'], course_id=course).all()
 
 #     return render_template('view_attendance.html', unique_courses=unique_courses, attendance=attendance)
 
@@ -301,7 +299,7 @@ def student():
 def faculty():
     lectures_count = Attendance.query.filter_by(
         marked_by=session['name']).with_entities(Attendance.lecture_no).distinct().count()
-    students_count = Student.query.with_entities(Student.rollno).count()
+    students_count = Student.query.with_entities(Student.student_id).count()
     faculty_count = Faculty.query.with_entities(Faculty.f_id).count()
     if session['is_admin']:
         courses = Course.query.all()
@@ -356,12 +354,12 @@ def register_student():
             data = Student.query.filter_by(email=request.form['email']).first()
             if data is None:
                 new_student = Student(
-                    rollno=request.form['rollno'],
+                    student_id=request.form['student_id'],
                     name=request.form['name'],
                     semester=request.form['semester'],
                     email=request.form['email'],
                     password=request.form['password'],
-                    pic_path=f'static/images/users/{request.form["rollno"]}-{request.form["name"]}.jpg',
+                    pic_path=f'static/images/users/{request.form["student_id"]}-{request.form["name"]}.jpg',
                     registered_on=datetime.now()
                 )
                 db.session.add(new_student)
@@ -369,7 +367,7 @@ def register_student():
 
                 if os.path.isfile('static/images/users/temp.jpg'):
                     os.rename('static/images/users/temp.jpg',
-                            f'static/images/users/{request.form["rollno"]}-{request.form["name"]}.jpg')
+                            f'static/images/users/{request.form["student_id"]}-{request.form["name"]}.jpg')
                 if 'img_captured' in session:
                     session.pop('img_captured')
                 flash('Student registration successful', 'success')
@@ -467,10 +465,10 @@ def view_lectures_attendance():
         
         attendance_details = []
         for attendance in attendances:
-            student = Student.query.filter_by(rollno=attendance.rollno).one()
+            student = Student.query.filter_by(student_id=attendance.student_id).one()
             attendance_details.append(
                 {
-                    "rollno": attendance.rollno,
+                    "student_id": attendance.student_id,
                     "student_name": student.name,
                     "lecture_no" : attendance.lecture_no,
                     "marked_by" : attendance.marked_by,
@@ -499,7 +497,7 @@ def download_attendance_csv(lect_no):
         lecture_no=lect_no, marked_by=session['name']).all()
     rows = ''
     for a in attendance:
-        rows += str(a.rollno)+','+str(a.course)+','+str(a.lecture_no)+',' + \
+        rows += str(a.student_id)+','+str(a.course)+','+str(a.lecture_no)+',' + \
             (a.marked_by)+','+str(a.marked_date)+','+str(a.marked_time)+' \n'
     csv = headings+rows
     return Response(
@@ -515,10 +513,10 @@ def download_attendance_csv(lect_no):
 def download_student_attendance_csv(course):
     headings = 'Roll_no,Course,Lecture_no,Marked_by,Marking_date,Marking_Time\n'
     attendance = Attendance.query.filter_by(
-        rollno=session['roll_no'], course=course).all()
+        student_id=session['roll_no'], course=course).all()
     rows = ''
     for a in attendance:
-        rows += str(a.rollno)+','+str(a.course)+','+str(a.lecture_no)+',' + \
+        rows += str(a.student_id)+','+str(a.course)+','+str(a.lecture_no)+',' + \
             (a.marked_by)+','+str(a.marked_date)+','+str(a.marked_time)+' \n'
     csv = headings+rows
     return Response(
@@ -591,16 +589,16 @@ def mark_face_attendance():
 
                     roll = roll_name.split('-')[0]
                     # Check if the entry is is already in the DB
-                    exists = Attendance.query.filter_by(rollno=roll).first()
+                    exists = Attendance.query.filter_by(student_id=roll).first()
                     # Check if the student's attendance is already marked
                     if exists:
                         is_marked_already = Attendance.query.filter(
-                            Attendance.rollno == roll, Attendance.course_id == session['course_id'], Attendance.lecture_no == int(session['lecture_no'])).all()
+                            Attendance.student_id == roll, Attendance.course_id == session['course_id'], Attendance.lecture_no == int(session['lecture_no'])).all()
                     # If this student is not in attendance, create an entry
                     if exists is None:
                         # Create a new row for the student:
                         attendance = Attendance(
-                            rollno=roll,
+                            student_id=roll,
                             course_id=session['course_id'],
                             lecture_no=session['lecture_no'],
                             marked_by=session['name'],
@@ -616,7 +614,7 @@ def mark_face_attendance():
                     elif len(is_marked_already) == 0:
                         # Create a new row for the student:
                         attendance = Attendance(
-                            rollno=roll,
+                            student_id=roll,
                             course_id=session['course_id'],
                             lecture_no=session['lecture_no'],
                             marked_by=session['name'],

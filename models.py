@@ -5,7 +5,7 @@ class Student(db.Model):
     __table_args__ = {'extend_existing': True}
 
     id = db.Column(db.Integer, primary_key=True)
-    rollno = db.Column(db.Integer, unique=True, nullable=False)
+    student_id = db.Column(db.Integer, unique=True, nullable=False) 
     name = db.Column(db.String(80))
     semester = db.Column(db.String(80))
     email = db.Column(db.String(100), unique=True)
@@ -30,7 +30,7 @@ class Attendance(db.Model):
     __table_args__ = {'extend_existing': True}
 
     att_id = db.Column(db.Integer, primary_key=True)
-    rollno = db.Column(db.Integer)
+    student_id = db.Column(db.Integer)
     course_id = db.Column(db.Integer)
     lecture_no = db.Column(db.Integer)
     marked_by = db.Column(db.String(80))
@@ -43,7 +43,6 @@ class Course(db.Model):
 
     course_id = db.Column(db.Integer, primary_key=True)
     course_name = db.Column(db.String(80))
-    total_lectures = db.Column(db.Integer)
     teacher_email = db.Column(db.String(800))
     students_email=  db.Column(db.String(500))
     
