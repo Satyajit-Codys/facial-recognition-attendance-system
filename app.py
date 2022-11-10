@@ -183,9 +183,8 @@ def add_course():
         # if email address not present in the database then show error
 
         data = Course.query.filter_by(course_name=course_name).first()
-        print(data.course_id)
 
-        if data =="None":
+        if data ==None:
             course = Course(
                 course_name=course_name,
                 teacher_email=teachers_email,
