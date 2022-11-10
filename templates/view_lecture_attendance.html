@@ -1,0 +1,73 @@
+{% extends 'layout.html' %}
+{% block body %}
+          <div class="col-md-12">
+            <div class="card">
+              <div class="card-header">
+                <h4 class="card-title text-center">Attendance for Each Lecture</h4>
+              </div>
+              <div class="card-body">
+                <form method="POST">
+                  <div class="form-group">
+                    <label for="inputCourse">Select Course: </label>
+                    <select class="custom-select" name="course" required>
+                      {% for course in courses %}
+                      <option value={{course.course_id}}> {{course.course_name}}</option>
+                      {%endfor%}
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="inputPassword4">Lecture No.</label>
+                    <input type="number" class="form-control" name='lecture' placeholder="Enter lecture number" min="1" value={{lect_no}} required>
+                  </div>
+                  <button type="submit" class="btn btn-primary">View Attendance </button>
+                </form>
+
+              {% if attendance|length >0 %}
+                  <hr>
+                  <br>
+                  <h2  style="text-align: center;"> Viewing Attendance for {{course_name}} - Lecture No. {{lect_no}}</h2> 
+                  <br><br>
+                  <table class="table table-bordered">
+                    <thead>
+                      <tr>
+                        <th scope="col">Roll No.</th>
+                        <th scope="col">Student Name</th>
+                        <th scope="col">Course</th>
+                        <th scope="col">Lecture No.</th>
+                        <th scope="col">Marked By</th>
+                        <th scope="col">Marking Date</th>
+                        <th scope="col">Marking Time</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for a in attendance %}
+                      <tr>
+                        <th>{{ a.rollno }}</th>
+                        <th>{{ a.student_name }}</th>
+                        <td>{{ course_name }}</td>
+                        <td>{{ a.lecture_no }}</td>
+                        <td>{{ a.marked_by }}</td>
+                        <td>{{ a.marked_date }}</td>
+                        <td>{{ a.marked_time }}</td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                  
+                    <a href="/facultydownloadcsv/{{ lect_no }}" class="btn btn-primary">
+                      Download Attendance File for Lecture {{ lect_no }}
+                    </a>
+                    
+            {% endif %}
+
+                {% if attendance|length ==0 %}
+                <br>
+                <br>
+                  <h5 class="text text-danger text-center">No Records Available</h5>
+                {% endif %}
+              </div>
+              <div class="card-footer text-muted">
+              </div>
+            </div>
+          </div>
+{% endblock %}
