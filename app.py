@@ -56,15 +56,38 @@ class RegexConverter(BaseConverter):
 
 app.url_map.converters['regex'] = RegexConverter
 
+def is_logged_in(f):
+    @wraps(f)
+    def wrap(*args, **kwargs):
+        if 'std_logged_in' in session:
+            return f(*args, **kwargs)
+        elif 'fty_logged_in' in session:
+            return f(*args, **kwargs)
+        else:
+            flash('Unauthorized, Please login!', 'danger')
+            return redirect(url_for('login_student'))
+    return wrap
+
+def is_student_logged_in(f):
+    @wraps(f)
+    def wrap(*args, **kwargs):
+        if 'std_logged_in' in session:
+            return f(*args, **kwargs)
+        else:
+            flash('Unauthorized, Please login!', 'danger')
+            return redirect(url_for('login_student'))
+    return wrap
+
 
 @app.route('/admin/<id>:<password>')
 def admin(id, password):
     print(id, file=sys.stdout)
+    domain="127.0.0.1:5000"
     if not id in sessions:
         return redirect('/404')
     if sessions[id]['password'] != password:
         return redirect('/view/'+id)
-    return render_template('draw.html', id=id, password=password)
+    return render_template('draw.html', id=id, password=password, domain=domain)
 
 @app.route('/404')
 def four ():
@@ -84,15 +107,11 @@ def format_server_time():
 
 
 @app.route('/whiteboard')
+@is_logged_in
 def whiteboard():
     context = {'server_time': format_server_time()}
     return render_template('whiteboard.html', context=context)
 
-
-@app.route('/about')
-def about():
-    context = {'server_time': format_server_time()}
-    return render_template('about.html', context=context)
 
 @app.errorhandler(404)
 def page_not_found(e):
@@ -233,29 +252,6 @@ def login_faculty():
             return render_template('login_faculty.html', error=error)
 
     return render_template('login_faculty.html')
-
-
-def is_logged_in(f):
-    @wraps(f)
-    def wrap(*args, **kwargs):
-        if 'std_logged_in' in session:
-            return f(*args, **kwargs)
-        elif 'fty_logged_in' in session:
-            return f(*args, **kwargs)
-        else:
-            flash('Unauthorized, Please login!', 'danger')
-            return redirect(url_for('login_student'))
-    return wrap
-
-def is_student_logged_in(f):
-    @wraps(f)
-    def wrap(*args, **kwargs):
-        if 'std_logged_in' in session:
-            return f(*args, **kwargs)
-        else:
-            flash('Unauthorized, Please login!', 'danger')
-            return redirect(url_for('login_student'))
-    return wrap
 
 
 def is_faculty_logged_in(f):

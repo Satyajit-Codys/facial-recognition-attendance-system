@@ -14,7 +14,6 @@
 
 </style>
 
-    <link href="{{ url_for('static', filename='favicon.png') }}" rel="icon" />
     <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/pickr.min.js"></script>
     <link
       rel="stylesheet"
@@ -28,7 +27,7 @@
     />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/canvas.css') }}" />
-    <title>Fabric | Draw</title>
+    <title>Smart Classroom | Draw</title>
   </head>
   <body style="overflow: hidden !important;">
     <style>
@@ -39,36 +38,7 @@
       </style>
     <canvas class="whiteboard bg-img" style="background-size: 100%; border: 50px; background-color: transparent; background-size:100%; background-position: center;background-repeat: no-repeat;"></canvas>
 
-    <nav
-      class="navbar navbar-expand-lg navbar-light bg-light"
-      style="height: 8vh;"
-    >
-      <a class="navbar-brand" href="/">
-        FABRIC
-      </a>
-      <button
-        class="navbar-toggler"
-        type="button"
-        data-toggle="collapse"
-        data-target="#navbarSupportedContent"
-        aria-controls="navbarSupportedContent"
-        aria-expanded="false"
-        aria-label="Toggle navigation"
-      >
-        <span class="navbar-toggler-icon"></span>
-      </button>
-
-      <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <ul class="navbar-nav ml-auto">
-          <li class="nav-item">
-            <a class="nav-link active" href="/">HOME</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link active" href="/about">ABOUT</a>
-          </li>
-        </ul>
-      </div>
-    </nav>
+    {% include 'includes/_navbar.html' %}
 
     <div>
       <div class="colors">
@@ -289,17 +259,17 @@ tea {
             <div>
               Invite Editors:
               <a
-                href="https://fabricapp.tk/admin/{{ id }}:{{ password}}"
+                href="http://{{domain}}/admin/{{ id }}:{{ password}}"
                 target="_blank"
-                >fabricapp.tk/admin/{{ id }}:{{ password}}</a
+                >{{domain}}/admin/{{ id }}:{{ password}}</a
               >
             </div>
             <div>
               Invite Viewers:
               <a
-                href="https://fabricapp.tk/view/{{ id }}"
+                href="http://{{domain}}/view/{{ id }}"
                 target="_blank"
-                >fabricapp.tk/view/{{ id }}</a
+                >{{domain}}/view/{{ id }}</a
               >
             </div>
             <div>Session ID: {{ id }}</div>
