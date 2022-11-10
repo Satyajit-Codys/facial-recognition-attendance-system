@@ -182,13 +182,22 @@ def add_course():
         # check teachers email adddress then save 
         # if email address not present in the database then show error
 
-        course = Course(
+        data = Course.query.filter_by(course_name=course_name).first()
+        print(data.course_id)
+
+        if data =="None":
+            course = Course(
                 course_name=course_name,
                 teacher_email=teachers_email,
                 students_email=students_email,
             )
-        db.session.add(course)
-        db.session.commit()
+            db.session.add(course)
+            db.session.commit()
+        else:
+            select_course = Course.query.filter_by(course_id=data.course_id).one()
+            select_course.students_email = select_course.students_email + students_email
+            db.session.commit()
+
         flash('Course Successfully Added', 'success')
         return redirect(url_for('add_course'))
 
