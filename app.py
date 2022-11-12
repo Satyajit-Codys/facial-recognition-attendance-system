@@ -1,11 +1,9 @@
 import time
 import os
 from datetime import datetime
-
 from flask import Flask, request, render_template, redirect, url_for, flash, session, Response
 from flask_sqlalchemy import SQLAlchemy
 from functools import wraps
-
 import cv2
 import numpy as np
 import face_recognition
@@ -44,6 +42,8 @@ from models import *
 sessions = {}
 num = 0
 socketio = SocketIO(app)
+ # socketio initialization
+# socketio =  SocketIO(app, async_mode='eventlet')
 
 pf = ProfanityFilter()
 
@@ -217,7 +217,7 @@ def login_student():
             session['uname'] = uname
             session['user_type'] = "student"
             session['email'] = email
-            session['roll_no'] = student.student_id
+            session['student_id'] = student.student_id
             session['name'] = student.name      
             flash('You are now logged in', 'success')
             return redirect(url_for('student'))
@@ -290,14 +290,14 @@ def student():
 # def view_attendance():
 #     course = request.args.get('course')
 
-#     unique_courses = Attendance.query.filter_by(student_id=session['roll_no']).all()
+#     unique_courses = Attendance.query.filter_by(student_id=session['student_id']).all()
 #     print(unique_courses[0].course_id)
 #     if course is None:
 #         course = 1
 #     # get unique lecture numbers marked by current faculty
 #     # get the attendance for the specified lecture
 #     attendance = Attendance.query.filter_by(
-#         student_id=session['roll_no'], course_id=course).all()
+#         student_id=session['student_id'], course_id=course).all()
 
 #     return render_template('view_attendance.html', unique_courses=unique_courses, attendance=attendance)
 
@@ -500,12 +500,13 @@ def view_lectures_attendance():
 @app.route('/facultydownloadcsv/<int:lect_no>')
 @is_faculty_logged_in
 def download_attendance_csv(lect_no):
-    headings = 'Roll_no,Course,Lecture_no,Marked_by,Marking_date,Marking_Time\n'
-    attendance = Attendance.query.filter_by(
-        lecture_no=lect_no, marked_by=session['name']).all()
+    headings = 'student_id,Course,Lecture_no,Marked_by,Marking_date,Marking_Time\n'
+    attendance = Attendance.query.filter_by(lecture_no=lect_no).all()
     rows = ''
     for a in attendance:
-        rows += str(a.student_id)+','+str(a.course)+','+str(a.lecture_no)+',' + \
+        course = Course.query.filter_by(course_id=a.course_id).first()
+
+        rows += str(a.student_id)+','+str(course.course_name)+','+str(a.lecture_no)+',' + \
             (a.marked_by)+','+str(a.marked_date)+','+str(a.marked_time)+' \n'
     csv = headings+rows
     return Response(
@@ -515,23 +516,23 @@ def download_attendance_csv(lect_no):
                  "attachment; filename=attendance.csv"})
 
 
-@app.route('/studentdownloadcsv', defaults={'course': None})
-@app.route('/studentdownloadcsv/<string:course>')
-@is_student_logged_in
-def download_student_attendance_csv(course):
-    headings = 'Roll_no,Course,Lecture_no,Marked_by,Marking_date,Marking_Time\n'
-    attendance = Attendance.query.filter_by(
-        student_id=session['roll_no'], course=course).all()
-    rows = ''
-    for a in attendance:
-        rows += str(a.student_id)+','+str(a.course)+','+str(a.lecture_no)+',' + \
-            (a.marked_by)+','+str(a.marked_date)+','+str(a.marked_time)+' \n'
-    csv = headings+rows
-    return Response(
-        csv,
-        mimetype="text/csv",
-        headers={"Content-disposition":
-                 "attachment; filename=my_attendance.csv"})
+# @app.route('/studentdownloadcsv', defaults={'course': None})
+# @app.route('/studentdownloadcsv/<string:course>')
+# @is_student_logged_in
+# def download_student_attendance_csv(course):
+#     headings = 'student_id,Course,Lecture_no,Marked_by,Marking_date,Marking_Time\n'
+#     attendance = Attendance.query.filter_by(
+#         student_id=session['student_id'], course=course).all()
+#     rows = ''
+#     for a in attendance:
+#         rows += str(a.student_id)+','+str(a.course)+','+str(a.lecture_no)+',' + \
+#             (a.marked_by)+','+str(a.marked_date)+','+str(a.marked_time)+' \n'
+#     csv = headings+rows
+#     return Response(
+#         csv,
+#         mimetype="text/csv",
+#         headers={"Content-disposition":
+#                  "attachment; filename=my_attendance.csv"})
 
 
 @app.route("/logout")
@@ -599,6 +600,7 @@ def mark_face_attendance():
                     # Check if the entry is is already in the DB
                     exists = Attendance.query.filter_by(student_id=roll).first()
                     # Check if the student's attendance is already marked
+                    print(exists, type(exists))
                     if exists:
                         is_marked_already = Attendance.query.filter(
                             Attendance.student_id == roll, Attendance.course_id == session['course_id'], Attendance.lecture_no == int(session['lecture_no'])).all()
@@ -617,6 +619,7 @@ def mark_face_attendance():
                         db.session.commit()
 
                         flag = True
+                        print("new entry")
 
                     # else if the student is already in the attendance, then check if his attendance is already marked for current lecture
                     elif len(is_marked_already) == 0:
@@ -633,12 +636,12 @@ def mark_face_attendance():
                         db.session.commit()
 
                         flag = True
-                        print('marked')
+                        print("existing entry")
+                        
 
                 face_names.append(roll_name)
 
         process_this_frame = not process_this_frame
-
         # Display the results
         for (top, right, bottom, left), roll_name in zip(face_locations, face_names):
 
@@ -663,7 +666,6 @@ def mark_face_attendance():
     # Release handle to the webcam
     video_capture.release()
     cv2.destroyAllWindows()
-
     return redirect(url_for('mark_attendance_2'))
 
 
