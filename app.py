@@ -182,7 +182,11 @@ def add_course():
         # check teachers email adddress then save 
         # if email address not present in the database then show error
 
-        data = Course.query.filter_by(course_name=course_name).first()
+        course = Course.query.filter_by(course_name=course_name).all()
+        if len(course)>0:
+            flash('Course Already Exists!!', 'danger')
+            return redirect(url_for('add_course'))
+        data = Course.query.filter_by(teacher_email=teachers_email).first()
 
         if data ==None:
             course = Course(
